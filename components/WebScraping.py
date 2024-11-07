@@ -92,21 +92,13 @@ def extract_data(htmlContent: str, hsCode: str, isOnlyOneRow = False) -> dict:
         row_data = [td.get_text(strip=True) for td in tr.find_all('td')]
         
         for value in data.values():
-            if value[2] == row_data[1] and value[5] == row_data[2]:
+            if value[2] == row_data[1] and value[4] == row_data[2]:
                 break
         else:
-            date_match = re.search(r'date:\s*(\d{2}/\d{2}/\d{4})', row_data[1])
-            print(date_match.group(0)) if date_match != None else print(None)
-            if date_match == None:
-                date_match = date_match = re.search(r'Date:\s*(\d{2}/\d{2}/\d{4})', row_data[1])
             
-            if date_match == None:
-                date_match = date_match = re.search(r'Date:\s*(\d{2}/\d{2}/\d{4})', row_data[1])
-            
-            print(date_match.group(0)) if date_match != None else print(None)
             match = re.search(r'(\d+\.\d+\s+\w+\s*)[^\w]*$', row_data[1]) 
             row_data.insert(2, match.group(0)) if match else row_data.insert(2, None)
-            row_data.insert(3, date_match.group(0)) if date_match else row_data.insert(3, None)
+            # row_data.insert(3, date_match.group(0)) if date_match else row_data.insert(3, None)
             row_data.insert(1, hsCode)
             data[row_data[0]] = row_data
 
@@ -119,7 +111,7 @@ def extract_data(htmlContent: str, hsCode: str, isOnlyOneRow = False) -> dict:
 
 # ****** Creating DataFrame and Saving ******
 def format_data(data):
-    df = pd.DataFrame.from_dict(data, orient='index', columns=['id', "HS Code" , 'Description', 'Unit value', 'Date' , 'Country'])
+    df = pd.DataFrame.from_dict(data, orient='index', columns=['id', "HS Code" , 'Description', 'Unit value' , 'Country'])
     df = df.drop(columns=['id'])
     save_data(df)
 
