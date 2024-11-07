@@ -1,0 +1,6 @@
+pandas
+playwright
+bs4
+pdfplumber
+openpyxl
+numpy
