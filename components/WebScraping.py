@@ -84,26 +84,52 @@ def extract_data(htmlContent: str, hsCode: str, isOnlyOneRow = False) -> dict:
     table = soup.find('table', {'id': 'dgList'})
     tbody = table.find('tbody')
     data = {}
+    counter = 0
     for tr in tbody.find_all('tr'):
         if "HeaderStyle" in tr.get("class", []):
             continue  
         
-            
+        print("Record No: ", counter)  
+        counter += 1 
         row_data = [td.get_text(strip=True) for td in tr.find_all('td')]
         
         for value in data.values():
-            if value[2] == row_data[1] and value[4] == row_data[2]:
+            if value[2] == row_data[1] and value[5] == row_data[2]:
                 break
         else:
             
             match = re.search(r'(\d+\.\d+\s+\w+\s*)[^\w]*$', row_data[1]) 
             row_data.insert(2, match.group(0)) if match else row_data.insert(2, None)
-            # row_data.insert(3, date_match.group(0)) if date_match else row_data.insert(3, None)
+            
+            
+            #  ******* Extracting the Goods Name *******
+            if row_data[1][0] in ['H', 'h']:
+                goodName_match = re.search(r'^(.*?)(?=HsCode)', row_data[1])
+            else:
+                goodName_match = re.match(r'^[^H]*(?=HsCode)', row_data[1])
+            
+            bracket_match = re.match(r'^[^(]*', goodName_match.group()) if goodName_match else None
+            if bracket_match:
+                dot_match = re.match(r'^[^.]+', bracket_match.group())
+            else:
+                dot_match = re.match(r'^[^.]+', goodName_match.group()) if goodName_match else None
+            
+            if dot_match:
+                goodName_match = dot_match
+            else:    
+                goodName_match = goodName_match if goodName_match else None   
+            # ==========================
+            
+            print(goodName_match.group()) if goodName_match else print(None)
+            
+            row_data.insert(3, goodName_match.group(0)) if goodName_match else row_data.insert(3, None)
             row_data.insert(1, hsCode)
             data[row_data[0]] = row_data
 
             if isOnlyOneRow == True:
                 break; 
+
+            
     
     return data
 
@@ -111,7 +137,7 @@ def extract_data(htmlContent: str, hsCode: str, isOnlyOneRow = False) -> dict:
 
 # ****** Creating DataFrame and Saving ******
 def format_data(data):
-    df = pd.DataFrame.from_dict(data, orient='index', columns=['id', "HS Code" , 'Description', 'Unit value' , 'Country'])
+    df = pd.DataFrame.from_dict(data, orient='index', columns=['id', "HS Code",'Description', 'Unit value', "Goods Name" , 'Country'])
     df = df.drop(columns=['id'])
     save_data(df)
 
