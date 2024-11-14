@@ -5,14 +5,22 @@ import pandas as pd
 import re
 import openpyxl
 import os
+from datetime import datetime
 
 
 async def scraper(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, maxPagesAllowed:int = 5):
     
     web_url = "https://www.weboc.gov.pk/(S(p4qc02boyxm1t1bc2mjszqta))/DownloadValuationData.aspx"
     
-    
-                       
+    file_name = 'weboc_data.xlsx'
+    outputExcelPath = f"./Documents/Excel-Files/{file_name}"
+    outputExcelPath = os.path.abspath(outputExcelPath)
+    if os.path.exists(outputExcelPath):
+        os.remove(outputExcelPath)  
+        print(f"{file_name} has been deleted.")
+    else:
+        print(f"{file_name} does not exist.")
+                      
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=False)  
         context = await browser.new_context()
@@ -28,8 +36,7 @@ async def scraper(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, 
             await page.click('#btnSearch')
             await page.wait_for_timeout(1000)
 
-            
-            
+                       
             try:
                 element = await page.wait_for_selector('#dgList', timeout=1000, state="attached")
                 print("Records found")
@@ -45,7 +52,6 @@ async def scraper(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, 
                 format_data(data)
 
             else:
-
                 num_Pages = await page.inner_text("#ctrlPageRender_lblPageDetails")
                 num_Pages = int(num_Pages.split(" ")[-1])
         
@@ -88,9 +94,7 @@ def extract_data(htmlContent: str, hsCode: str, isOnlyOneRow = False) -> dict:
     for tr in tbody.find_all('tr'):
         if "HeaderStyle" in tr.get("class", []):
             continue  
-        
-        print("Record No: ", counter)  
-        counter += 1 
+         
         row_data = [td.get_text(strip=True) for td in tr.find_all('td')]
         
         for value in data.values():
@@ -120,7 +124,7 @@ def extract_data(htmlContent: str, hsCode: str, isOnlyOneRow = False) -> dict:
                 goodName_match = goodName_match if goodName_match else None   
             # ==========================
             
-            print(goodName_match.group()) if goodName_match else print(None)
+            # print(goodName_match.group()) if goodName_match else print(None)
             
             row_data.insert(3, goodName_match.group(0)) if goodName_match else row_data.insert(3, None)
             row_data.insert(1, hsCode)
@@ -139,6 +143,10 @@ def extract_data(htmlContent: str, hsCode: str, isOnlyOneRow = False) -> dict:
 def format_data(data):
     df = pd.DataFrame.from_dict(data, orient='index', columns=['id', "HS Code",'Description', 'Unit value', "Goods Name" , 'Country'])
     df = df.drop(columns=['id'])
+
+    current_DateTime = datetime.now()
+    dateStamp = current_DateTime.strftime("%d-%m-%Y") 
+    df["Date"] = dateStamp
     save_data(df)
 
 
@@ -156,7 +164,6 @@ def save_data(df):
 
     except FileNotFoundError:
         df.to_excel(outputExcelPath, index=False)
-
 
 
 
