@@ -4,7 +4,7 @@ import pandas as pd
 import os
 
 
-HsCodes = pdf_extractor(count=10, newExtraction=False)
+HsCodes = pdf_extractor(pdf_name = "PAKISTANCUSTOMSTARIFF-2023-24.pdf", count=10, newExtraction=False)
 if type(HsCodes) == list:
     # HsCodes.insert(5, "1511.9030")
     # print(HsCodes)
@@ -25,16 +25,17 @@ if type(HsCodes) == list:
     # password = 'your_password' 
     # driver = '{ODBC Driver 17 for SQL Server}'
     
+    
     # try:
     #     conn = pyodbc.connect(
-    #         f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}')
+    #         f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}Trusted_Connection=yes;')
     #     print("Connected to SQL Server successfully!")
         
     #     df.to_sql(table_name, con=conn, if_exists='append', index=False, method='multi')
     #     print(f"Data appended successfully to {table_name}!")
 
     # except Exception as e:
-    #     print("An error occurred while connecting or inserting data:", e)
+    #     print("An error occurred while connecting or inserting data: ", e)
     
     # finally:
     #     conn.close()
