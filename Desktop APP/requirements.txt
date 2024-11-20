@@ -1,0 +1,9 @@
+pandas
+playwright
+bs4
+pdfplumber
+openpyxl
+numpy
+asyncio
+pyqt5
+pyinstaller
