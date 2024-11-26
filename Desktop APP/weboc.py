@@ -339,7 +339,7 @@ class MainWindow(QWidget):
             
         
         #  *************************** WEB Scraping CODE ****************************
-        async def scraper(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, maxPagesAllowed:int = 5):
+        async def scraper(hsCodeList:list[str], isAllPages = True, onlyOneRow = False, maxPagesAllowed:int = 5):
             # CLearing Existing Data
             file_name = 'weboc_data.xlsx'
             outputExcelPath = f"./Excel-Files/{file_name}"
@@ -403,7 +403,8 @@ class MainWindow(QWidget):
                         num_Pages = int(num_Pages.split(" ")[-1])
 
                         counter = 1
-                        while(counter <= num_Pages and counter <= maxPagesAllowed):
+                        # while(counter <= num_Pages and counter <= maxPagesAllowed):
+                        while(counter <= num_Pages):
 
                             await page.fill('#ctrlPageRender_txtGoToPage', str(counter))
                             await page.click('#ctrlPageRender_btnGoTo')
@@ -519,8 +520,10 @@ class MainWindow(QWidget):
 
                 
         
-        def run(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, maxPagesAllowed:int = 5):
-            asyncio.run(scraper(hsCodeList, isAllPages, onlyOneRow, maxPagesAllowed))
+        def run(hsCodeList:list[str], isAllPages = True, onlyOneRow = False, maxPagesAllowed:int = 5):
+            isAllPages = True
+            maxPagesAllowed = 5
+            asyncio.run(scraper(hsCodeList, isAllPages=isAllPages, onlyOneRow=False, maxPagesAllowed=maxPagesAllowed))
             # Database Connection here
         #  **************************************************************************
         
@@ -552,7 +555,7 @@ class MainWindow(QWidget):
                 self.counter_label.setText(f"Counter:             {self.progressCounter} / {self.totalCounter}")
                 self.box6_label.setText("")
                 self.box6.setStyleSheet("")
-                
+                # isAllPages = True
                 self.thread = threading.Thread(target=run, args=([result]))
                 self.thread.start()
             else:

@@ -45,7 +45,7 @@ async def scraper(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, 
                 print(checkStr)
                 continue
             
-             
+            
             if isAllPages == False:
                 pageContent = await page.content()
                 data = extract_data(pageContent, hsCode, onlyOneRow)   
@@ -56,7 +56,8 @@ async def scraper(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, 
                 num_Pages = int(num_Pages.split(" ")[-1])
         
                 counter = 1
-                while(counter <= num_Pages and counter <= maxPagesAllowed):
+                # while(counter <= num_Pages and counter <= maxPagesAllowed):
+                while(counter <= num_Pages):
 
                     await page.fill('#ctrlPageRender_txtGoToPage', str(counter))
                     await page.click('#ctrlPageRender_btnGoTo')
@@ -66,7 +67,7 @@ async def scraper(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, 
                     pageContent = await page.content()
 
                     # await asyncio.sleep(0.5)
-                    data = extract_data(pageContent, hsCode)   
+                    data = extract_data(pageContent, hsCode, onlyOneRow)   
                     format_data(data)  
 
                     counter += 1

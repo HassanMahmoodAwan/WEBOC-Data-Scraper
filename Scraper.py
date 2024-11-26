@@ -6,9 +6,9 @@ import os
 
 HsCodes = pdf_extractor(pdf_name = "PAKISTANCUSTOMSTARIFF-2023-24.pdf", count=10, newExtraction=False)
 if type(HsCodes) == list:
-    # HsCodes.insert(5, "1511.9030")
+    HsCodes.insert(5, "1511.9030")
     # print(HsCodes)
-    run(HsCodes)
+    run(HsCodes, isAllPages=True, maxPagesAllowed=5)
     
     # ****** Dumping Data into DB. *******
     # file_name = 'weboc_data.xlsx'
