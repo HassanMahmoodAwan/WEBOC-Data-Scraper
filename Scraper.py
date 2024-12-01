@@ -4,11 +4,17 @@ import pandas as pd
 import os
 
 
-HsCodes = pdf_extractor(pdf_name = "PAKISTANCUSTOMSTARIFF-2023-24.pdf", count=10, newExtraction=False)
+HsCodes = pdf_extractor(pdf_name = "PAKISTANCUSTOMSTARIFF-2023-24.pdf", count=10, newExtraction=False, allHsCode=True)
+print(HsCodes)
 if type(HsCodes) == list:
-    HsCodes.insert(5, "1511.9030")
+    # HsCodes.insert(5, "1511.9030")
     # print(HsCodes)
-    run(HsCodes, isAllPages=True, maxPagesAllowed=5)
+    with open(os.getcwd() + "/Documents/hsCode.txt", "r") as f:
+            code = f.read()
+            print(code)
+    if bool(code):
+        run(HsCodes, isAllPages=True, maxPagesAllowed=5, isContinue=True, existingHsCode=code)
+    # run(HsCodes, isAllPages=True, maxPagesAllowed=5, isContinue=True, existingHsCode=code)
     
     # ****** Dumping Data into DB. *******
     # file_name = 'weboc_data.xlsx'

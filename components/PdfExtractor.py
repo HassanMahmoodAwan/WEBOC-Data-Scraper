@@ -2,7 +2,7 @@ import pdfplumber
 import pandas as pd
 import os
 
-def pdf_extractor(pdf_name:str = "PAKISTANCUSTOMSTARIFF-2023-24.pdf", count:int= 20, newExtraction = False) -> list | str:
+def pdf_extractor(pdf_name:str = "PAKISTANCUSTOMSTARIFF-2023-24.pdf", count:int= 20, newExtraction = False, allHsCode = True) -> list | str:
 
     
     outputExcelPath = "./Documents/Excel-Files/pdfData.xlsx"
@@ -10,6 +10,8 @@ def pdf_extractor(pdf_name:str = "PAKISTANCUSTOMSTARIFF-2023-24.pdf", count:int=
     
     if newExtraction == False:
         df = pd.read_excel(outputExcelPath)
+        if allHsCode == True:
+            return df["HsCode"].tolist()   
         return df.head(count)["HsCode"].tolist()
 
     
@@ -38,6 +40,8 @@ def pdf_extractor(pdf_name:str = "PAKISTANCUSTOMSTARIFF-2023-24.pdf", count:int=
         print("No of Rows: ", combined_df.shape[0])
     
     try:
+        if allHsCode:
+            return combined_df["HsCode"].tolist()
         return combined_df.head(count)["HsCode"].tolist()
     except Exception as e:
         print("Not converted into List: ", e)

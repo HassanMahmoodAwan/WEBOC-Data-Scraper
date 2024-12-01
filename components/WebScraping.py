@@ -6,39 +6,61 @@ import re
 import openpyxl
 import os
 from datetime import datetime
+import time
 
+# ===== Global Variable ======
+dataSavingCounter = 0
+singleHsCodeData = {}
 
-async def scraper(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, maxPagesAllowed:int = 5):
+async def scraper(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, maxPagesAllowed:int = 5, isContinue=False, existingHsCode = None):
+    global dataSavingCounter
+    global singleHsCodeData
     
+    # Check Existing HsCode exist to Continue.
+    if isContinue:  
+        try:
+            start_index =  hsCodeList.index(existingHsCode) 
+            dataSavingCounter = len(pd.read_excel(os.getcwd() + "/Documents/Excel-Files/weboc_data.xlsx"))
+        except:
+            print("HsCode donot exist in List")
+            return
+    else:
+        start_index = 0
+        dataSavingCounter = 0
+
+
     web_url = "https://www.weboc.gov.pk/(S(p4qc02boyxm1t1bc2mjszqta))/DownloadValuationData.aspx"
     
-    file_name = 'weboc_data.xlsx'
-    outputExcelPath = f"./Documents/Excel-Files/{file_name}"
-    outputExcelPath = os.path.abspath(outputExcelPath)
-    if os.path.exists(outputExcelPath):
-        os.remove(outputExcelPath)  
-        print(f"{file_name} has been deleted.")
-    else:
-        print(f"{file_name} does not exist.")
-                      
+    # new Extraction, Delete existing Data.
+    if not isContinue:
+        outputExcelPath = f"./Documents/Excel-Files/weboc_data.xlsx"
+        outputExcelPath = os.path.abspath(outputExcelPath)
+        if os.path.exists(outputExcelPath):
+            os.remove(outputExcelPath)  
+            print("weboc_data.xlsx has been deleted.")
+        else:
+            print("weboc_data.xlsx does not exist.")
+     
+    # try:                      
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=False)  
         context = await browser.new_context()
         page = await context.new_page()
         await page.goto(web_url)
-            
-        for hsCode in hsCodeList:
-            if type(hsCode) != str or len(hsCode) != 9:
+        for index in range(start_index, len(hsCodeList)):
+            hsCodeData = {}
+            if type(hsCodeList[index]) != str or len(hsCodeList[index]) != 9:
                 continue
-            print(hsCode)    
-
-            await page.fill('#txtHSCode', hsCode)
+            print(hsCodeList[index])   
+            with open(os.getcwd() + "/Documents/hsCode.txt", "w") as f:
+                f.write(hsCodeList[index])
+                f.close()
+            await page.fill('#txtHSCode', hsCodeList[index])
             await page.click('#btnSearch')
-            await page.wait_for_timeout(1000)
-
-                       
+            await page.wait_for_timeout(1500)
+            # chech record found, if not, continue.
             try:
-                element = await page.wait_for_selector('#dgList', timeout=1000, state="attached")
+                element = await page.wait_for_selector('#dgList', timeout=1500, state="attached")
                 print("Records found")
             except:
                 checkStr = await page.inner_text("#lblMessage", timeout=500)
@@ -48,36 +70,44 @@ async def scraper(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, 
             
             if isAllPages == False:
                 pageContent = await page.content()
-                data = extract_data(pageContent, hsCode, onlyOneRow)   
+                data = extract_data(pageContent, hsCodeList[index], onlyOneRow)   
                 format_data(data)
-
             else:
                 num_Pages = await page.inner_text("#ctrlPageRender_lblPageDetails")
                 num_Pages = int(num_Pages.split(" ")[-1])
-        
                 counter = 1
                 # while(counter <= num_Pages and counter <= maxPagesAllowed):
                 while(counter <= num_Pages):
-
+                    print("Counter")
                     await page.fill('#ctrlPageRender_txtGoToPage', str(counter))
+                    await asyncio.sleep(0.2)
                     await page.click('#ctrlPageRender_btnGoTo')
+                    print("Clicked")
                     await asyncio.sleep(1)
-                    await page.wait_for_selector('#dgList tbody tr', timeout=10000)
-
+                    await page.wait_for_selector('#dgList tbody tr', timeout=100000, state="attached")
                     pageContent = await page.content()
-
-                    # await asyncio.sleep(0.5)
-                    data = extract_data(pageContent, hsCode, onlyOneRow)   
-                    format_data(data)  
-
+                    await asyncio.sleep(1)
+                    data = extract_data(pageContent, hsCodeList[index], onlyOneRow) 
+                    hsCodeData = singleHsCodeData =  {**hsCodeData, **data}
+                      
                     counter += 1
                     num_Pages = await page.inner_text("#ctrlPageRender_lblPageDetails")
                     num_Pages = int(num_Pages.split(" ")[-1])
                     print("PageCount:", num_Pages)
                     print("counter value:", counter)
-            
-            
+                
+                format_data(hsCodeData)
+                hsCodeData = {}
+                singleHsCodeData = {}
         await browser.close()
+    # except Exception as e:
+    #     print("Any Issue is Occured, might be Internet Issue.")
+    #     print("Exception: ", e)
+        
+        # format_data(singleHsCodeData)
+        
+        
+        
         
         
         
@@ -124,8 +154,7 @@ def extract_data(htmlContent: str, hsCode: str, isOnlyOneRow = False) -> dict:
             else:    
                 goodName_match = goodName_match if goodName_match else None   
             # ==========================
-            
-            # print(goodName_match.group()) if goodName_match else print(None)
+                       
             
             row_data.insert(3, goodName_match.group(0)) if goodName_match else row_data.insert(3, None)
             row_data.insert(1, hsCode)
@@ -134,8 +163,6 @@ def extract_data(htmlContent: str, hsCode: str, isOnlyOneRow = False) -> dict:
             if isOnlyOneRow == True:
                 break; 
 
-            
-    
     return data
 
 
@@ -153,23 +180,69 @@ def format_data(data):
 
 # ****** Saving Records in Excel File *******
 def save_data(df):
+    global dataSavingCounter
     file_name = 'weboc_data.xlsx'
     outputExcelPath = f"./Documents/Excel-Files/{file_name}"
     outputExcelPath = os.path.abspath(outputExcelPath)
 
+    
+    print("current Counter: ", dataSavingCounter)
+    
     try:
-        reader = pd.read_excel(outputExcelPath)
+        # reader = pd.read_excel(outputExcelPath)
         writer = pd.ExcelWriter(outputExcelPath, engine='openpyxl', mode='a', if_sheet_exists='overlay') 
-        df.to_excel(writer, index=False, header=False, startrow=len(reader) + 1)
+        df.to_excel(writer, index=False, header=False, startrow=dataSavingCounter + 1)
+        print("writed into excel file")
         writer.close()
-
+        
+        dataSavingCounter += len(df)
     except FileNotFoundError:
         df.to_excel(outputExcelPath, index=False)
 
 
 
+async def retry_exception_Runner(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, maxPagesAllowed:int = 5, isContinue=False, existingHsCode = None):
+    retry_counter= 0
+    retry_attempts = 100
+    retry_interval = 15                 # 15 Secs break. 
+    
+    
+    while (retry_counter <= retry_attempts):
+        try:
+            await scraper(hsCodeList, isAllPages, onlyOneRow, maxPagesAllowed, isContinue, existingHsCode)
+            print("Successfully, retreive all the data.")
+            with open(os.getcwd() + "/Documents/hsCode.txt", "w") as f:
+                f.write("")
+                f.close()
+            break
+        except Exception as e:
+            print("An Exception Occurred: ", e)
+            print("Excecution Failed")
+            
+            format_data(singleHsCodeData)
+        
+            with open(os.getcwd() + "/Documents/hsCode.txt", "r") as f:
+                existingHsCode = f.read()
+            
+            retry_counter += 1
+            
+            if retry_counter >= retry_attempts:
+                print("Max Retry attempts Reached. ")
+                break
+            
+            print("Retrying Program Execution in {}.".format(retry_interval))
+                
+            await asyncio.sleep(retry_interval)
+
+
 
 
 # ******** Function runner *******
-def run(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, maxPagesAllowed:int = 5):
-    asyncio.run(scraper(hsCodeList, isAllPages, onlyOneRow, maxPagesAllowed))
+def run(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, maxPagesAllowed:int = 5, isContinue=False, existingHsCode = None):
+    
+    asyncio.run(retry_exception_Runner(hsCodeList, isAllPages, onlyOneRow, maxPagesAllowed, isContinue, existingHsCode))
+    
+            
+            
+            
+            
