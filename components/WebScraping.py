@@ -19,8 +19,18 @@ async def scraper(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, 
     # Check Existing HsCode exist to Continue.
     if isContinue:  
         try:
-            start_index =  hsCodeList.index(existingHsCode) 
-            dataSavingCounter = len(pd.read_excel(os.getcwd() + "/Documents/Excel-Files/weboc_data.xlsx"))
+            start_index =  hsCodeList.index(existingHsCode)
+            print(start_index)
+            try: 
+                if os.path.exists(os.getcwd() + "/Documents/Excel-Files/temps.xlsx"):
+                    dataSavingCounter = len(pd.read_excel(os.getcwd() + "/Documents/Excel-Files/temps.xlsx"))
+                    print(dataSavingCounter)
+                else :
+                    print("Path is not right.")
+                    return
+            except:
+                dataSavingCounter = 0
+            print(dataSavingCounter)
         except:
             print("HsCode donot exist in List")
             return
@@ -33,7 +43,7 @@ async def scraper(hsCodeList:list[str], isAllPages = False, onlyOneRow = False, 
     
     # new Extraction, Delete existing Data.
     if not isContinue:
-        outputExcelPath = f"./Documents/Excel-Files/weboc_data.xlsx"
+        outputExcelPath = f"./Documents/Excel-Files/temps.xlsx"
         outputExcelPath = os.path.abspath(outputExcelPath)
         if os.path.exists(outputExcelPath):
             os.remove(outputExcelPath)  
@@ -181,7 +191,7 @@ def format_data(data):
 # ****** Saving Records in Excel File *******
 def save_data(df):
     global dataSavingCounter
-    file_name = 'weboc_data.xlsx'
+    file_name = 'temps.xlsx'
     outputExcelPath = f"./Documents/Excel-Files/{file_name}"
     outputExcelPath = os.path.abspath(outputExcelPath)
 

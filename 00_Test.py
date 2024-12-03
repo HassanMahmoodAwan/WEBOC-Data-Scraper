@@ -1,34 +1,51 @@
 import pandas as pd
 import os
-from components import *
 
-# Path = os.getcwd() + "/Documents/Excel-Files/weboc_data.xlsx" 
-# testPath = os.getcwd() + "/Output.xlsx"
+# # Define file paths
+# Path = os.getcwd() + "/Documents/Excel-Files/weboc_data.xlsx"
+# output_file_path = os.getcwd() + "/Documents/Output.xlsx"
 
+# # Check if the file exists
 # if os.path.exists(Path):
+#     # Load the DataFrame
 #     df = pd.read_excel(Path, index_col=None, dtype={'HS Code': str})
-#     print(df.head(6))
-#     # df.drop(columns=df.columns[0], axis=1, inplace=True)
+#     print("Initial DataFrame:")
     
- 
-# print(df.shape)
-# df.drop_duplicates(subset=None, keep='first', inplace=True )
-# print(df.shape)   
+#     # Print the initial shape
+#     print("Initial shape:", df.shape)
 
-# df.to_excel("Output.xlsx", index=False, engine='openpyxl')
+#     # Remove duplicates, ignoring the 'Date' column
+#     # df = df.loc[~df.drop(columns=['Date']).duplicated(keep='first')]
+#     df.drop_duplicates(subset=None, keep='first', inplace=True)
+#     print(df.head(6))
+
+    
+
+#     # Print the final shape
+#     print("Shape after removing duplicates:", df.shape)
+
+#     # Save the updated DataFrame to an Excel file
+#     df.to_excel(output_file_path, index=False, engine='openpyxl')
+#     print(f"File saved to {output_file_path}")
 
 
 
-one = {
-    "A": [10, 20, 30],
-    "B": "40"
-}
+# Load two dataframes and merge the second one into first and save in Output.xlsx.
+Path_one = os.getcwd() + "/Documents/Output.xlsx"
+Path_two = os.getcwd() + "/Documents/Output_temp.xlsx"
+output_file_path = os.getcwd() + "/Output.xlsx"
 
-two = {
-    "A": [40, 60, 90, 60],
-    "B": "30"
-}
 
-result = {key: one[key] + two[key] for key in one}
+df_one  = pd.read_excel(Path_one, index_col=None, dtype={'HS Code': str})
+df_two =  pd.read_excel(Path_two, index_col=None, dtype={'HS Code': str})
+df_two.columns = df_one.columns
 
-print(result)
+print(df_one.shape)
+print(df_two.shape)
+merged_df = pd.concat([df_one, df_two], ignore_index=True)
+merged_df.to_excel(output_file_path, index=False, engine='openpyxl')
+print("Saved")
+
+print(merged_df.head(5))
+# print(df_one.head(5))
+# print(df_two.head(5))
